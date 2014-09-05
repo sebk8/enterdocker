@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# "Quick & Dirty" NSENTER Support Skript
+# State 04-09-2014 // S.Klingberg // science+computing ag
+#
+scriptname=$(basename $0)
+name=$1
+check(){
+    if which docker >/dev/null
+    then
+        if [[ -z $name ]]; then
+            echo "SYNTAX: $scriptname <dockername/dockerid> [exec command in docker]"
+            echo "$scriptname > Please enter running Dockername you want to enter!"
+            exit 1
+        elif [ $name = "0" ]; then
+            echo "$scriptname > Nice Try! ..Name a Docker - not the namespace of your root system... "
+            exit 1
+        fi
+        dockerpid=$(docker inspect --format {{.State.Pid}} $name)
+    else
+        echo "$scriptname > Container $1 not found, and Docker not installed."
+        exit 1
+    fi
+}
+if check; then
+
+    #Check for command arguments
+    declare -a command_args
+    index=0
+    noarguments=false
+    for arg
+    do
+        command_args[$index]=$arg
+        #DEBUG
+        #echo "${index}: ${command_args[$index]}"
+        ((index++))
+    done
+
+
+    #Check if additional commands are given
+    #DEBUG
+    #echo "GIVEN: ${command_args[1]}"
+    if [[ -z ${command_args[1]} ]]; then
+        noarguments=true
+    fi
+    #Enter Docker Container on default Shell
+    if [[ $noarguments == true ]]; then
+        echo "$scriptname > Log onto Docker '$name'(${dockerpid})"
+        nsenter --target $dockerpid --mount --uts --ipc --net --pid
+        echo "$scriptname > Logged of from Docker '$name'(${dockerpid})"
+
+        #Execute Command on docker and forward SDOUT
+    else
+        pos=1
+        command_string=""
+        for command_args; do
+            if [ $pos = 1 ];then
+                command_string="${command_args[$pos]}"
+            else
+                command_string="$command_string ${command_args[$pos]}"
+            fi
+            #Delete last char
+            #command_string=${command_string:0:-1}
+            ((pos++))
+        done
+        echo "$scriptname > executing on Docker '$name'(${dockerpid}): '${command_string}'"
+        nsenter --target $dockerpid --mount --uts --ipc --net --pid $command_string
+        echo "$scriptname > Command executed on Docker '$name'(${dockerpid}): '${command_string}'"
+    fi
+else
+    exit 0
+fi
