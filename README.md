@@ -6,9 +6,12 @@
 
 If you're going to execute a command directly over this script (or nsenter) please consider to specify absolute file paths:
 
-`# enterdocker myDocker ls --> WRONG `
-`# enterdocker myDocker /bin/ls --> RIGHT`
-(NOTE: I didn't found a way to get a dockers $PATH for for the host ... I may fix this soon or anyone of you guys have a good idea )
+```
+# enterdocker myDocker ls --> WRONG
+# enterdocker myDocker /bin/ls --> RIGHT
+```
+
+(NOTE: I didn't found a way to get a dockers $PATH for for the host ... I may fix this soon or anyone of you guys comes up with a good idea )
 
 
 
